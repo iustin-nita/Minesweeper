@@ -18,7 +18,7 @@ let grid = []; // tiles
 let mouseState = {
   x: 0,
   y: 0,
-  click: null
+  click: null // [x,y, button] button = left/right mouse click
 };
 
 let gameState = {
@@ -127,4 +127,54 @@ let startLevel = diff => {
 
 let gameOver = () => {
   gameState.screen = "lose";
+};
+
+let updateGame = () => {
+  if (gameState.screen == "menu") {
+    //select difficulty in the menu
+    if (mouseState.click != null) {
+      for (let i in difficulties) {
+        if (
+          mouseState.y >= difficulties[i].menuBox[0] &&
+          mouseState.y <= difficulties[i].menuBox[1]
+        ) {
+          startLevel(i);
+          break;
+        }
+      }
+      mouseState.click = null;
+    }
+  } else if (gameState.screen == "win " || gameState.screen == "lost") {
+    if (mouseState.click != null) {
+      gameState.screen = "menu";
+      mouseState.click = null;
+    }
+  }
+  // otherwise we are playing
+  else {
+    if (mouseState.click != null) {
+      let cDiff = difficulties[gameState.difficulty];
+      if (
+        mouseState.click[0] > offsetX &&
+        mouseState.click[0] < offsetX + cDiff.width * gameState.tileW &&
+        mouseState.click[1] > offsetY &&
+        mouseState.click[1] < offsetY + cDiff.height * gameState.tileH
+      ) {
+        const tile = [
+          Math.floor((mouseState.click[0] - offsetX) / gameState.tileW),
+          Math.floor((mouseState.click[1] - offsetY) / gameState.tileH)
+        ];
+        if (mouseState.click[2] == 1) {
+          grid[tile[1] * cDiff.width + tile[0]].onClick();
+        } else {
+          grid[tile[1] * cDiff.width + tile[0]].setFlag();
+        }
+
+        // else is not on the grid
+      } else if (mouseState.click[1] >= 380) {
+        gameState.screen = "menu";
+      }
+      mouseState.click = null;
+    }
+  }
 };
