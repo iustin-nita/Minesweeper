@@ -50,7 +50,7 @@ class Tile {
       return;
     }
     if (this.hasMine) {
-      endGame();
+      gameOver();
     } else if (this.danger > 0) {
       this.currentState = "visible";
     } else {
