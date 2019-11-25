@@ -104,7 +104,7 @@ let startLevel = diff => {
   for (let posy = 0; posy < currentDifficulty.height; posy++) {
     for (let posx = 0; posx < currentDifficulty.width; posx++) {
       let index = posy * currentDifficulty.width + posx;
-      grid.push(new Tile(posx, posy));
+      grid.push(new Tile(posx, posy, currentDifficulty));
     }
   }
   let minesPlaced = 0;
@@ -120,7 +120,7 @@ let startLevel = diff => {
     minesPlaced++;
   }
 
-  for (var i in grid) {
+  for (let i in grid) {
     grid[i].calcDanger();
   }
 };
@@ -202,12 +202,12 @@ let drawMenu = () => {
     }
   }
 
-  for (var d in difficulties) {
+  for (let d in difficulties) {
     if (difficulties[d].bestTime == 0) {
       ctx.fillText("No best time", 150, y);
     } else {
-      var t = difficulties[d].bestTime;
-      var bestTime = "";
+      let t = difficulties[d].bestTime;
+      let bestTime = "";
       if (t / 1000 >= 60) {
         bestTime = Math.floor(t / 1000 / 60) + ":";
         t = t % 60000;
@@ -217,6 +217,140 @@ let drawMenu = () => {
     }
     y += 80;
   }
+};
+
+let drawPlaying = () => {
+  let halfW = gameState.tileW / 2;
+  let halfH = gameState.tileH / 2;
+
+  let cDiff = difficulties[gameState.difficulty];
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+
+  ctx.fillStyle = "#000000";
+  ctx.font = "12px sans-serif";
+  ctx.fillText(cDiff.name, 150, 20);
+
+  ctx.fillText("Return to menu", 150, 390);
+  if (gameState.screen != "lost") {
+    ctx.textAlign = "left";
+    ctx.fillText("Mines: " + cDiff.mines, 10, 40);
+    let whichT = gameState.screen == "won" ? gameState.timeTaken : gameTime;
+    let t = "";
+    if (gameTime / 1000 > 60) {
+      t = Math.floor(whichT / 1000 / 60) + ":";
+    }
+    let s = Math.floor((whichT / 1000) % 60);
+    t += s > 9 ? s : "0" + s;
+
+    ctx.textAlign = "right";
+    ctx.fillText("Time: " + t, 290, 40);
+  }
+
+  if (gameState.screen == "lost" || gameState.screen == "won") {
+    ctx.textAlign = "center";
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText(
+      gameState.screen == "lost" ? "Game Over" : "Cleared!",
+      150,
+      offsetY - 15
+    );
+  }
+
+  ctx.strokeStyle = "#999999";
+  ctx.strokeRect(
+    offsetX,
+    offsetY,
+    cDiff.width * gameState.tileW,
+    cDiff.height * gameState.tileH
+  );
+
+  ctx.font = "bold 10px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  for (let i in grid) {
+    let px = offsetX + grid[i].x * gameState.tileW;
+    let py = offsetY + grid[i].y * gameState.tileH;
+    if (gameState.screen == "lost" && grid[i].hasMine) {
+      ctx.fillStyle = "#ff0000";
+      ctx.fillRect(px, py, gameState.tileW, gameState.tileH);
+      ctx.fillStyle = "#000000";
+      ctx.fillText("x", px + halfW, py + halfH);
+    } else if (grid[i].currentState == "visible") {
+      ctx.fillStyle = "#dddddd";
+
+      if (grid[i].danger) {
+        ctx.fillStyle = "#000000";
+        ctx.fillText(grid[i].danger, px + halfW, py + halfH);
+      }
+    } else {
+      ctx.fillStyle = "#cccccc";
+      ctx.fillRect(px, py, gameState.tileW, gameState.tileH);
+      ctx.strokeRect(px, py, gameState.tileW, gameState.tileH);
+
+      if (grid[i].currentState == "flagged") {
+        ctx.fillStyle = "#0000cc";
+        ctx.fillText("P", px + halfW, py + halfH);
+      }
+    }
+  }
+};
+
+let drawGame = () => {
+  if (ctx == null) {
+    return;
+  }
+
+  // Frame & update related timing
+  let currentFrameTime = Date.now();
+  if (lastFrameTime == 0) {
+    lastFrameTime = currentFrameTime;
+  }
+  let timeElapsed = currentFrameTime - lastFrameTime;
+  gameTime += timeElapsed;
+
+  updateGame();
+
+  let sec = Math.floor(Date.now() / 1000);
+  if (sec != currentSecond) {
+    currentSecond = sec;
+    framesLastSecond = frameCount;
+    frameCount = 1;
+  } else {
+    frameCount++;
+  }
+
+  ctx.fillStyle = "#ddddee";
+  ctx.fillRect(0, 0, 300, 400);
+
+  if (gameState.screen == "menu") {
+    drawMenu();
+  } else {
+    drawPlaying();
+  }
+
+  ctx.textAlign = "left";
+  ctx.font = "10pt sans-serif";
+  ctx.fillStyle = "#000000";
+  ctx.fillText("Frames: " + framesLastSecond, 5, 15);
+  lastFrameTime = currentFrameTime;
+
+  requestAnimationFrame(drawGame);
+};
+
+let realPos = (x, y) => {
+  let p = document.getElementById("game");
+
+  do {
+    x -= p.offsetLeft;
+    y -= p.offsetTop;
+
+    p = p.offsetParent;
+  } while (p != null);
+
+  return [x, y];
 };
 
 window.onload = function() {

@@ -1,7 +1,8 @@
 class Tile {
-  constructor(x, y) {
+  constructor(x, y, cDiff) {
     this.x = x;
     this.y = y;
+    this.cDiff = cDiff;
     this.hasMine = false;
     this.danger = 0;
     this.currentState = "hidden";
@@ -16,21 +17,22 @@ class Tile {
         // if it's the same tile or if it's out of bounds (width max/height max) => we do nothing
         if (posx == this.x && posy == this.y) {
           continue;
-        }
-        if (
+        } else if (
           posx < 0 ||
           posx > currentDifficulty.width ||
           posy < 0 ||
           posy > currentDifficulty.height
         ) {
           continue;
-        }
-
-        // if it's a valid tile but not the tile we're calculating danger for itself, we check if the tile has a mine.
-        // if so, we increase the danger level.
-        let index = posy * cDiff.width + posx;
-        if (grid[index].hasMine) {
-          this.danger++;
+        } else {
+          // if it's a valid tile but not the tile we're calculating danger for itself, we check if the tile has a mine.
+          // if so, we increase the danger level.
+          let index = posy * currentDifficulty.width + posx;
+          console.log("index", index);
+          console.log("grid", grid[index]);
+          if (grid[index] && grid[index].hasMine) {
+            this.danger++;
+          }
         }
       }
     }
@@ -81,7 +83,7 @@ class Tile {
         // check if the current neighbour tile currentState is hidden.
         // if so, we set the currentState to visible,
         // and if it also has a danger level of 0 we also reveal its neighbours:
-        let index = py * cDiff.width + px;
+        let index = posy * currentDifficulty.width + posx;
         if (grid[index].currentState == "hidden") {
           grid[index].currentState = "visible";
           if (grid[index].danger == 0) {
