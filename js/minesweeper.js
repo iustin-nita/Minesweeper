@@ -178,3 +178,64 @@ let updateGame = () => {
     }
   }
 };
+
+let drawMenu = () => {
+  ctx.textAlign = "center";
+  ctx.font = "bold 20pt sans-serif";
+  ctx.fillStyle = "#000000";
+
+  let y = 100;
+
+  for (let d in difficulties) {
+    let mouseOver = mouseState.y >= y - 20 && mouseState.y <= y + 10;
+
+    if (mouseOver) {
+      ctx.fillStyle = "#000099";
+    }
+
+    difficulties[d].menuBox = [y - 20, y + 10];
+    ctx.fillText(difficulties[d].name, 150, y);
+    y += 80;
+
+    if (mouseOver) {
+      ctx.fillStyle = "#000000";
+    }
+  }
+
+  for (var d in difficulties) {
+    if (difficulties[d].bestTime == 0) {
+      ctx.fillText("No best time", 150, y);
+    } else {
+      var t = difficulties[d].bestTime;
+      var bestTime = "";
+      if (t / 1000 >= 60) {
+        bestTime = Math.floor(t / 1000 / 60) + ":";
+        t = t % 60000;
+      }
+      bestTime += Math.floor(t / 1000) + "." + (t % 1000);
+      ctx.fillText("Best time   " + bestTime, 150, y);
+    }
+    y += 80;
+  }
+};
+
+window.onload = function() {
+  ctx = document.getElementById("game").getContext("2d");
+  document.getElementById("game").addEventListener("click", e => {
+    let pos = realPos(e.pageX, e.pageY);
+    mouseState.click = [pos[0], pos[1], 1];
+  });
+  document.getElementById("game").addEventListener("mousemove", e => {
+    let pos = realPos(e.pageX, e.pageY);
+    mouseState.x = pos[0];
+    mouseState.y = pos[1];
+  });
+  document.getElementById("game").addEventListener("contextmenu", e => {
+    e.preventDefault();
+    let pos = realPos(e.pageX, e.pageY);
+    mouseState.click = [pos[0], pos[1], 2];
+    return false;
+  });
+
+  requestAnimationFrame(drawGame);
+};
